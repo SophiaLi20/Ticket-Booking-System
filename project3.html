@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ticket Booking System</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 1rem; background: #f4f4f4; }
+  header { text-align: center; margin-bottom: 2rem; }
+  nav a { margin: 0 15px; text-decoration: none; color: #0077cc; font-weight: bold; cursor: pointer; }
+  nav a:hover { color: #005599; }
+  #events { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+  .event-card {
+    background: white; padding: 1rem; border-radius: 8px; width: 250px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: relative;
+  }
+  .event-card h3 { margin-top: 0; }
+  .seats { margin-top: 0.5rem; font-weight: bold; }
+  button.book-btn {
+    margin-top: 1rem; padding: 0.5rem 1rem; background: #0077cc; border: none; color: white;
+    border-radius: 5px; cursor: pointer; transition: background 0.3s ease;
+  }
+  button.book-btn:hover { background: #005599; }
+  /* Modal Styles */
+  #booking-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+  }
+  #booking-modal .modal-content {
+    background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%;
+  }
+  #booking-modal label { display: block; margin: 0.5rem 0 0.2rem; }
+  #booking-modal input[type=number], #booking-modal input[type=text] {
+    width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 5px; border: 1px solid #ccc;
+  }
+  #booking-modal button {
+    margin-top: 1rem; padding: 0.5rem 1rem; background: #0077cc; border: none; color: white;
+    border-radius: 5px; cursor: pointer; width: 100%;
+  }
+  #booking-modal button:hover { background: #005599; }
+  #booking-modal .close-btn {
+    position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2rem; color: #333;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ticket Booking System</h1>
+  <nav>
+    <a onclick="scrollToSection('events-section')">Home</a>
+    <a onclick="scrollToSection('events-section')">Events</a>
+    <a onclick="alert('Contact us at support@tickets.com')">Contact</a>
+  </nav>
+</header>
+
+<section id="events-section">
+  <h2>Upcoming Events</h2>
+  <div id="events">
+    <!-- Event cards will be inserted here -->
+  </div>
+</section>
+
+<!-- Booking Modal -->
+<div id="booking-modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">×</span>
+    <h3>Book Your Seats</h3>
+    <form id="booking-form">
+      <input type="hidden" id="event-id" />
+      <label for="user-name">Your Name:</label>
+      <input type="text" id="user-name" required />
+      <label for="seats">Number of Seats:</label>
+      <input type="number" id="seats" min="1" required />
+      <button type="submit">Confirm Booking</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const eventsDiv = document.getElementById('events');
+  const bookingModal = document.getElementById('booking-modal');
+  const bookingForm = document.getElementById('booking-form');
+  const eventIdInput = document.getElementById('event-id');
+  const userNameInput = document.getElementById('user-name');
+  const seatsInput = document.getElementById('seats');
+
+  async function fetchEvents() {
+    try {
+      const res = await fetch('http://localhost:3000/api/events');
+      const events = await res.json();
+      renderEvents(events);
+    } catch (e) {
+      eventsDiv.innerHTML = '<p>Failed to load events. Is the backend running?</p>';
+    }
+  }
+
+  function renderEvents(events) {
+    eventsDiv.innerHTML = '';
+    events.forEach(event => {
+      const card = document.createElement('div');
+      card.className = 'event-card';
+      card.innerHTML = `
+        <h3>${event.name}</h3>
+        <p>Category: ${capitalize(event.category)}</p>
+        <p>Date: ${event.date}</p>
+        <p class="seats">Seats available: ${event.seats}</p>
+        <button class="book-btn" onclick="openBookingModal(${event.id}, ${event.seats})" ${event.seats === 0 ? 'disabled' : ''}>Book Now</button>
+      `;
+      eventsDiv.appendChild(card);
+    });
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function openBookingModal(eventId, availableSeats) {
+    eventIdInput.value = eventId;
+    seatsInput.max = availableSeats;
+    seatsInput.value = 1;
+    userNameInput.value = '';
+    bookingModal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    bookingModal.style.display = 'none';
+  }
+
+  bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const eventId = parseInt(eventIdInput.value);
+    const userName = userNameInput.value.trim();
+    const seatsRequested = parseInt(seatsInput.value);
+
+    if(seatsRequested < 1) {
+      alert('Please select at least one seat.');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:3000/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, seatsRequested, userName })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (res.ok) {
+        closeModal();
+        fetchEvents();
+      }
+    } catch (err) {
+      alert('Error making booking. Please try again later.');
+    }
+  });
+
+  function scrollToSection(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  fetchEvents();
+</script>
+
+</body>
+</html>

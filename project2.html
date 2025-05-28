@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BookMyWeb - Advanced Ticket Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-color-light: #f9f9f9;
+    --text-color-light: #222;
+    --bg-color-dark: #121212;
+    --text-color-dark: #eee;
+    --premium-color: #d4af37;
+    --standard-color: #28a745;
+    --economy-color: #007bff;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  body.light {
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+  }
+
+  /* Navbar */
+  .navbar {
+    position: fixed;
+    top: 0; width: 100%;
+    background: #222;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    transition: background 0.5s ease;
+  }
+  body.light .navbar {
+    background: #ddd;
+    color: #222;
+  }
+  .navbar h2 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 24px;
+  }
+  .menu a {
+    margin: 0 15px;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  .menu a:hover {
+    color: #ffcc00;
+  }
+
+  /* Dark/Light toggle */
+  .toggle-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-wrapper span {
+    margin-left: 10px;
+    font-weight: 600;
+  }
+  .toggle-switch {
+    width: 50px;
+    height: 24px;
+    background: #444;
+    border-radius: 15px;
+    position: relative;
+    transition: background 0.5s ease;
+  }
+  body.light .toggle-switch {
+    background: #aaa;
+  }
+  .toggle-thumb {
+    width: 22px;
+    height: 22px;
+    background: #ffcc00;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    transition: left 0.4s cubic-bezier(0.23,1,0.32,1);
+  }
+  body.light .toggle-thumb {
+    left: 26px;
+  }
+
+  /* Sections */
+  section {
+    padding: 100px 20px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  #home h1 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+  }
+  .subtext {
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 30px;
+  }
+  body.light .subtext {
+    color: #555;
+  }
+
+  /* Seat Container */
+  .container {
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transition: background 0.5s ease;
+  }
+  body.light .container {
+    background: rgba(0 0 0 / 0.05);
+  }
+
+  /* Seats grid */
+  .seats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .seat {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      background-color 0.3s ease;
+  }
+  /* Seat Types */
+  .seat.premium {
+    background-color: var(--premium-color);
+    box-shadow: 0 0 6px var(--premium-color);
+  }
+  .seat.standard {
+    background-color: var(--standard-color);
+    box-shadow: 0 0 6px var(--standard-color);
+  }
+  .seat.economy {
+    background-color: var(--economy-color);
+    box-shadow: 0 0 6px var(--economy-color);
+  }
+
+  /* Hover effect */
+  .seat:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 15px #ffeb3b;
+  }
+  /* Selected seat */
+  .seat.selected {
+    box-shadow: 0 0 20px #fff;
+    outline: 3px solid #fff;
+    transform: scale(1.25);
+  }
+
+  /* Button */
+  button {
+    background: #ff5e5e;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: block;
+    margin: 0 auto;
+  }
+  button:hover {
+    background: #ff2e2e;
+  }
+
+  #output {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffeb3b;
+    text-align: center;
+  }
+  body.light #output {
+    color: #d17f00;
+  }
+
+  /* Events Section */
+  #events h2,
+  #contact h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .event {
+    background: rgba(255 255 255 / 0.1);
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 600px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: background 0.5s ease;
+  }
+  body.light .event {
+    background: rgba(0 0 0 / 0.05);
+  }
+
+  /* Contact Section */
+  .contact-info {
+    background: rgba(255 255 255 / 0.1);
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    text-align: center;
+    transition: background 0.5s ease;
+  }
+  body.light .contact-info {
+    background: rgba(0 0 0 / 0.05);
+  }
+
+  /* Footer */
+  footer {
+    padding: 20px;
+    text-align: center;
+    background-color: #222;
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-top: 50px;
+  }
+  body.light footer {
+    background-color: #ddd;
+    color: #333;
+  }
+
+  /* Search bar */
+  #search-container {
+    max-width: 600px;
+    margin: 20px auto 40px;
+    display: flex;
+    gap: 10px;
+  }
+  #search-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+  }
+  #filter-select {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Modal styles */
+  .modal-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-bg.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal {
+    background: var(--bg-color-dark);
+    color: var(--text-color-dark);
+    padding: 30px 40px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    position: relative;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  body.light .modal {
+    background: var(--bg-color-light);
+    color: var(--text-color-light);
+  }
+  .modal h3 {
+    margin-top: 0;
+    font-size: 1.8rem;
+  }
+  .modal p {
+    margin: 15px 0;
+    font-size: 1.1rem;
+  }
+  .modal button.close-btn {
+    background: #ff5e5e;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s ease;
+  }
+  .modal button.close-btn:hover {
+    background: #ff2e2e;
+  }
+
+  /* AI Suggestions */
+  #suggestions {
+    max-width: 600px;
+    margin: 40px auto 20px;
+    text-align: center;
+  }
+  #suggestions h3 {
+    margin-bottom: 15px;
+  }
+  #suggestions ul {
+    list-style: none;
+    padding: 0;
+  }
+  #suggestions li {
+    background: #333;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    color: #ffcc00;
+    font-weight: 600;
+  }
+  #suggestions li:hover {
+    background: #555;
+  }
+  body.light #suggestions li {
+    background: #eee;
+    color: #aa7700;
+  }
+  body.light #suggestions li:hover {
+    background: #ccc;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .seats {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    #search-container {
+      flex-direction: column;
+    }
+    #filter-select {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar">
+  <h2>BookMyWeb</h2>
+  <div class="menu">
+    <a href="#home" class="nav-link">Home</a>
+    <a href="#events" class="nav-link">Events</a>
+    <a href="#contact" class="nav-link">Contact</a>
+  </div>
+  <div class="toggle-wrapper" id="toggleDarkLight" title="Toggle Dark/Light Mode">
+    <div class="toggle-switch">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span>Dark Mode</span>
+  </div>
+</nav>
+
+<!-- Home Section -->
+<section id="home">
+  <h1>Welcome to BookMyWeb</h1>
+  <p class="subtext">Your one-stop platform for seamless ticket booking.</p>
+
+  <div class="container">
+    <h2>Select Your Seats</h2>
+    <p><strong>Seat Types:</strong> <span style="color:var(--premium-color)">Premium</span>, <span style="color:var(--standard-color)">Standard</span>, <span style="color:var(--economy-color)">Economy</span></p>
+
+    <div class="seats" id="seatGrid">
+      <!-- Seats will be generated by JS -->
+    </div>
+
+    <p><strong>Selected Seats:</strong> <span id="selectedSeats">None</span></p>
+    <p><strong>Total Price:</strong> $<span id="totalPrice">0</span></p>
+    <button id="bookBtn" disabled>Book Now</button>
+    <p id="output"></p>
+  </div>
+</section>
+
+<!-- Search & Events Section -->
+<section id="events">
+  <h2>Upcoming Events</h2>
+
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search events by name..." />
+    <select id="filter-select" title="Filter by Category">
+      <option value="all">All Categories</option>
+      <option value="music">Music</option>
+      <option value="sports">Sports</option>
+      <option value="theater">Theater</option>
+      <option value="comedy">Comedy</option>
+    </select>
+  </div>
+
+  <div id="events-list">
+    <!-- Events loaded dynamically -->
+  </div>
+
+  <div id="suggestions">
+    <h3>Suggested Events For You</h3>
+    <ul id="suggestions-list">
+      <!-- AI suggestions here -->
+    </ul>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact">
+  <h2>Contact Us</h2>
+  <div class="contact-info">
+    <p>Have questions? We're here to help!</p>
+    <p>Email: support@bookmyweb.com</p>
+    <p>Phone: +1 234 567 8900</p>
+    <p>Address: 123 Web Street, Internet City</p>
+  </div>
+</section>
+
+<!-- Booking Confirmation Modal -->
+<div class="modal-bg" id="bookingModal">
+  <div class="modal">
+    <h3>Booking Confirmation</h3>
+    <p id="bookingSummary"></p>
+    <button class="close-btn" id="closeModalBtn">Close</button>
+  </div>
+</div>
+
+<footer>
+  &copy; 2025 BookMyWeb. All rights reserved.
+</footer>
+
+<script>
+  // Dark/Light Mode Toggle
+  const body = document.body;
+  const toggleWrapper = document.getElementById('toggleDarkLight');
+  const toggleThumb = toggleWrapper.querySelector('.toggle-thumb');
+  const toggleLabel = toggleWrapper.querySelector('span');
+
+  toggleWrapper.addEventListener('click', () => {
+    body.classList.toggle('light');
+    if(body.classList.contains('light')){
+      toggleLabel.textContent = 'Light Mode';
+    } else {
+      toggleLabel.textContent = 'Dark Mode';
+    }
+  });
+
+  // Seat data & pricing
+  const seatTypes = {
+    premium: {price: 50, color: 'premium'},
+    standard: {price: 30, color: 'standard'},
+    economy: {price: 15, color: 'economy'},
+  };
+
+  // Generate seats (5 rows x 5 seats = 25 seats)
+  // Rows: 1,2 premium; 3,4 standard; 5 economy
+  const seatGrid = document.getElementById('seatGrid');
+  const selectedSeatsDisplay = document.getElementById('selectedSeats');
+  const totalPriceDisplay = document.getElementById('totalPrice');
+  const bookBtn = document.getElementById('bookBtn');
+  let selectedSeats = [];
+
+  function createSeat(seatNum, type) {
+    const seat = document.createElement('div');
+    seat.classList.add('seat', seatTypes[type].color);
+    seat.textContent = seatNum;
+    seat.dataset.type = type;
+    seat.dataset.price = seatTypes[type].price;
+    seat.dataset.seatNum = seatNum;
+
+    seat.addEventListener('click', () => {
+      // Toggle seat selection
+      if (seat.classList.contains('selected')) {
+        seat.classList.remove('selected');
+        selectedSeats = selectedSeats.filter(s => s.seatNum !== seatNum);
+      } else {
+        selectedSeats.push({
+          seatNum,
+          type,
+          price: seatTypes[type].price
+        });
+        seat.classList.add('selected');
+      }
+      updateSelectionDisplay();
+    });
+
+    return seat;
+  }
+
+  function updateSelectionDisplay() {
+    if(selectedSeats.length === 0) {
+      selectedSeatsDisplay.textContent = "None";
+      totalPriceDisplay.textContent = "0";
+      bookBtn.disabled = true;
+    } else {
+      selectedSeatsDisplay.textContent = selectedSeats.map(s => `${s.seatNum} (${s.type})`).join(', ');
+      const total = selectedSeats.reduce((acc, s) => acc + s.price, 0);
+      totalPriceDisplay.textContent = total.toFixed(2);
+      bookBtn.disabled = false;
+    }
+  }
+
+  function generateSeats() {
+    seatGrid.innerHTML = "";
+    let seatNum = 1;
+    for(let row=1; row<=5; row++) {
+      let type = 'economy';
+      if(row <= 2) type = 'premium';
+      else if(row <= 4) type = 'standard';
+
+      for(let col=1; col<=5; col++) {
+        seatGrid.appendChild(createSeat(seatNum++, type));
+      }
+    }
+  }
+  generateSeats();
+
+  // Booking confirmation modal
+  const bookingModal = document.getElementById('bookingModal');
+  const bookingSummary = document.getElementById('bookingSummary');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+
+  bookBtn.addEventListener('click', () => {
+    const seatsList = selectedSeats.map(s => `${s.seatNum} (${s.type}, $${s.price})`).join(', ');
+    const total = selectedSeats.reduce((acc, s) => acc + s.price, 0).toFixed(2);
+    bookingSummary.innerHTML = `<strong>Seats:</strong> ${seatsList}<br><strong>Total Price:</strong> $${total}<br><br>Thank you for booking with BookMyWeb!`;
+    bookingModal.classList.add('active');
+  });
+
+  closeModalBtn.addEventListener('click', () => {
+    bookingModal.classList.remove('active');
+  });
+
+  // Events Data (dummy)
+  const events = [
+    {id: 1, name: "Rock Music Festival", category: "music", tags: ["music", "rock", "festival"], date: "2025-06-15"},
+    {id: 2, name: "Champions Basketball Game", category: "sports", tags: ["sports", "basketball", "game"], date: "2025-06-20"},
+    {id: 3, name: "Comedy Night Live", category: "comedy", tags: ["comedy", "standup", "live"], date: "2025-07-05"},
+    {id: 4, name: "Classical Theater Play", category: "theater", tags: ["theater", "play", "classical"], date: "2025-07-12"},
+    {id: 5, name: "Jazz Evening", category: "music", tags: ["music", "jazz", "evening"], date: "2025-07-22"},
+    {id: 6, name: "Football Finals", category: "sports", tags: ["sports", "football", "finals"], date: "2025-08-01"},
+  ];
+
+  const eventsList = document.getElementById('events-list');
+  const searchInput = document.getElementById('search-input');
+  const filterSelect = document.getElementById('filter-select');
+  const suggestionsList = document.getElementById('suggestions-list');
+
+  // Render Events
+  function renderEvents(list) {
+    eventsList.innerHTML = "";
+    if(list.length === 0){
+      eventsList.innerHTML = "<p style='text-align:center; font-style: italic;'>No events found.</p>";
+      return;
+    }
+    list.forEach(e => {
+      const div = document.createElement('div');
+      div.classList.add('event-item');
+      div.innerHTML = `<h3>${e.name}</h3><p>Category: ${capitalize(e.category)}</p><p>Date: ${e.date}</p>`;
+      eventsList.appendChild(div);
+    });
+  }
+
+  // Capitalize first letter
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Filter and Search Events
+  function filterAndSearchEvents() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const filterCategory = filterSelect.value;
+    const filtered = events.filter(event => {
+      const matchesCategory = filterCategory === 'all' || event.category === filterCategory;
+      const matchesSearch = event.name.toLowerCase().includes(searchTerm);
+      return matchesCategory && matchesSearch;
+    });
+    renderEvents(filtered);
+    updateSuggestions(filtered);
+  }
+
+  // AI Suggestions Logic (simple)
+  function updateSuggestions(filteredEvents) {
+    suggestionsList.innerHTML = "";
+    if(filteredEvents.length === 0) {
+      suggestionsList.innerHTML = "<li>No suggestions available.</li>";
+      return;
+    }
+    // Suggest top 3 events with 'music' or 'sports' category as an example
+    const suggested = filteredEvents.filter(e => ['music', 'sports'].includes(e.category)).slice(0, 3);
+    suggested.forEach(event => {
+      const li = document.createElement('li');
+      li.textContent = `${event.name} (${capitalize(event.category)})`;
+      li.addEventListener('click', () => {
+        searchInput.value = event.name;
+        filterSelect.value = event.category;
+        filterAndSearchEvents();
+      });
+      suggestionsList.appendChild(li);
+    });
+  }
+
+  searchInput.addEventListener('input', filterAndSearchEvents);
+  filterSelect.addEventListener('change', filterAndSearchEvents);
+
+  // Initial render
+  renderEvents(events);
+  updateSuggestions(events);
+</script>
+</body>
+</html>
